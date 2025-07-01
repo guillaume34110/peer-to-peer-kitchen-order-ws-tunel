@@ -1,0 +1,26 @@
+{
+  "name": "kitchen-tunnel-server",
+  "version": "1.0.0",
+  "description": "Serveur WebSocket local pour tunnel de messages JSON entre clients restaurant",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "websocket",
+    "tunnel",
+    "restaurant",
+    "real-time",
+    "peer-to-peer"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.14.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+} 
