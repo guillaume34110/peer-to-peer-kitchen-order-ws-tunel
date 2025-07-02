@@ -7,7 +7,10 @@ const connectedClients = new Set();
  * Démarre le serveur WebSocket et configure les gestionnaires d'événements
  */
 const startServer = () => {
-  const wss = new WebSocketServer({ port: PORT });
+  const wss = new WebSocketServer({ 
+    port: PORT,
+    host: '0.0.0.0'
+  });
   
   wss.on('connection', handleConnection);
   
@@ -15,7 +18,8 @@ const startServer = () => {
     console.error('Erreur serveur WebSocket:', error);
   });
 
-  console.log(`🚀 Serveur tunnel WebSocket démarré sur ws://localhost:${PORT}`);
+  console.log(`🚀 Serveur tunnel WebSocket démarré sur ws://0.0.0.0:${PORT}`);
+  console.log(`📡 Accessible depuis le réseau local sur ws://[votre-ip]:${PORT}`);
   
   return wss;
 };
