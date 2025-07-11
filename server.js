@@ -29,6 +29,7 @@ const startServer = () => {
  * @param {WebSocket} ws - Instance WebSocket du client connecté
  */
 const handleConnection = (ws) => {
+  console.log('[CONNEXION] Nouveau client connecté.');
   addClient(ws);
   attachMessageHandler(ws);
   attachCloseHandler(ws);
@@ -40,6 +41,7 @@ const handleConnection = (ws) => {
  */
 const addClient = (ws) => {
   connectedClients.add(ws);
+  console.log(`[CLIENT_ADD] Client ajouté. Total: ${connectedClients.size}`);
 };
 
 /**
@@ -50,6 +52,7 @@ const attachMessageHandler = (ws) => {
   ws.on('message', (data) => {
     try {
       const message = data.toString();
+      console.log(`[MESSAGE_RECU] Message: ${message}`);
       handleMessage(message, ws);
     } catch (error) {
       console.error('Erreur lors du traitement du message:', error);
@@ -63,6 +66,7 @@ const attachMessageHandler = (ws) => {
  */
 const attachCloseHandler = (ws) => {
   ws.on('close', () => {
+    console.log('[DECONNEXION] Client déconnecté.');
     removeClient(ws);
   });
   
@@ -78,6 +82,7 @@ const attachCloseHandler = (ws) => {
  */
 const removeClient = (ws) => {
   connectedClients.delete(ws);
+  console.log(`[CLIENT_REMOVE] Client retiré. Total: ${connectedClients.size}`);
 };
 
 /**
@@ -86,8 +91,11 @@ const removeClient = (ws) => {
  * @param {WebSocket} senderWs - WebSocket du client émetteur
  */
 const handleMessage = (message, senderWs) => {
+  console.log(`[HANDLE_MESSAGE] Traitement du message.`);
   if (isValidJsonMessage(message)) {
     broadcast(message, senderWs);
+  } else {
+    console.log(`[INVALID_JSON] Message ignoré car non-JSON: ${message}`);
   }
 };
 
@@ -99,8 +107,10 @@ const handleMessage = (message, senderWs) => {
 const isValidJsonMessage = (message) => {
   try {
     JSON.parse(message);
+    console.log('[VALIDATION] Message JSON valide.');
     return true;
   } catch {
+    console.log('[VALIDATION] Message JSON invalide.');
     return false;
   }
 };
@@ -112,6 +122,7 @@ const isValidJsonMessage = (message) => {
  */
 const broadcast = (message, excludeWs) => {
   const recipients = getActiveRecipients(excludeWs);
+  console.log(`[BROADCAST] Diffusion du message à ${recipients.length} client(s).`);
   
   recipients.forEach(ws => {
     sendMessageToClient(ws, message);
@@ -145,6 +156,7 @@ const isClientReady = (ws) => {
  */
 const sendMessageToClient = (ws, message) => {
   try {
+    console.log(`[SEND] Envoi du message à un client.`);
     ws.send(message);
   } catch (error) {
     console.error('Erreur envoi message:', error);
