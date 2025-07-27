@@ -1,7 +1,60 @@
 import { WebSocketServer } from 'ws';
+import os from 'os';
 
 const PORT = process.env.PORT || 3000;
 const connectedClients = new Set();
+
+/**
+ * Récupère l'adresse IP locale du serveur
+ * @returns {string} Adresse IP locale
+ */
+const getLocalIpAddress = () => {
+  const interfaces = os.networkInterfaces();
+  
+  for (const name of Object.keys(interfaces)) {
+    for (const networkInterface of interfaces[name]) {
+      // Ignore les interfaces non IPv4 et les adresses de bouclage
+      if (networkInterface.family === 'IPv4' && !networkInterface.internal) {
+        return networkInterface.address;
+      }
+    }
+  }
+  
+  return '127.0.0.1'; // Fallback vers localhost
+};
+
+/**
+ * Crée une réponse avec l'adresse IP du serveur
+ * @returns {string} Message JSON avec l'adresse IP
+ */
+const createIpResponse = () => {
+  const ipAddress = getLocalIpAddress();
+  return JSON.stringify({
+    type: 'server_info',
+    ip: ipAddress,
+    port: PORT,
+    wsUrl: `ws://${ipAddress}:${PORT}`
+  });
+};
+
+/**
+ * Vérifie si un message est une demande d'adresse IP
+ * @param {Object} message - Message JSON parsé
+ * @returns {boolean} True si c'est une demande d'IP
+ */
+const isIpRequest = (message) => {
+  return message.type === 'get_server_info';
+};
+
+/**
+ * Gère une demande d'adresse IP du serveur
+ * @param {WebSocket} ws - WebSocket du client demandeur
+ */
+const handleIpRequest = (ws) => {
+  console.log('[IP_REQUEST] Demande d\'adresse IP reçue.');
+  const response = createIpResponse();
+  sendMessageToClient(ws, response);
+};
 
 /**
  * Démarre le serveur WebSocket et configure les gestionnaires d'événements
@@ -18,8 +71,9 @@ const startServer = () => {
     console.error('Erreur serveur WebSocket:', error);
   });
 
+  const ipAddress = getLocalIpAddress();
   console.log(`🚀 Serveur tunnel WebSocket démarré sur ws://0.0.0.0:${PORT}`);
-  console.log(`📡 Accessible depuis le réseau local sur ws://[votre-ip]:${PORT}`);
+  console.log(`📡 Accessible depuis le réseau local sur ws://${ipAddress}:${PORT}`);
   
   return wss;
 };
@@ -92,8 +146,15 @@ const removeClient = (ws) => {
  */
 const handleMessage = (message, senderWs) => {
   console.log(`[HANDLE_MESSAGE] Traitement du message.`);
+  
   if (isValidJsonMessage(message)) {
-    broadcast(message, senderWs);
+    const parsedMessage = JSON.parse(message);
+    
+    if (isIpRequest(parsedMessage)) {
+      handleIpRequest(senderWs);
+    } else {
+      broadcast(message, senderWs);
+    }
   } else {
     console.log(`[INVALID_JSON] Message ignoré car non-JSON: ${message}`);
   }
